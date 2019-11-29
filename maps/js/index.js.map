@@ -1,0 +1,1 @@
+{"version":3,"sources":["index.js"],"names":["init","console","log","exports","default"],"mappings":"AAAA,SAASA,OACLC,QAAQC,IAAI,WAGhBC,QAAQC,QAAUJ","file":"../../src/js/index.js","sourcesContent":["function init(){\n    console.log('fdfdfdf')\n}\n\nexports.default = init;"]}

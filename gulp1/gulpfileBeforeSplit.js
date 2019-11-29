@@ -18,7 +18,6 @@ var gulp = require('gulp'),
     watchPath = require('gulp-watch-path'),
     combiner = require('stream-combiner2');
 var sourceMap = require('gulp-sourcemaps');
-const browserSync = require('browser-sync').create();
 var pump = require('pump');
 
 
@@ -113,7 +112,7 @@ gulp.task('handleHtmlmin', function (cb) {
   pump([
       gulp.src('src/html/*.html'),
       htmlmin(options),
-      gulp.dest('dist')
+      gulp.dest('dist/html')
   ], cb)
 });
 
@@ -132,23 +131,6 @@ gulp.task('testImagemin', function (cb) {
   ], cb);
 });
 
-/**
- * 开启浏览器
- */
-gulp.task('browserSync', function() {
-    browserSync.init([
-            "src/**/*.*", 
-        ], {
-        server: {
-            baseDir: "./dist"
-        }
-    });
-});
-
-gulp.task('watch', gulp.series('browserSync'), function () {
-    gulp.watch(config.src + "/**/*.*", ['handleJs','cssmin','handleLess','handleHtmlmin','testImagemin']);
-});
-
 // gulp.task('default',
 //   gulp.series('clean',
 //     gulp.parallel('handleJs','cssmin','handleLess','handleHtmlmin','testImagemin')  
@@ -159,7 +141,7 @@ gulp.task('default', function(cb) {
   runSequence(
       'clean', // 第一步：清理目标目录
       ['handleJs','cssmin','handleLess','handleHtmlmin','testImagemin'], // 第二步：打包 
-      'watch', // 第三步：监控
+      // 'watch', // 第三步：监控
       cb
   );
 });

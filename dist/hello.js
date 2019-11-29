@@ -1,1 +1,0 @@
-"use strict";function hello(){setTimeout(function(){console.log("hello")},1e3)}module.exports.default=hello;

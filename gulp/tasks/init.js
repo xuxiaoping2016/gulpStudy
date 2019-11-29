@@ -7,63 +7,34 @@ var gulp = require('gulp'),
     htmlmin  = require('gulp-htmlmin'),
     imgmin = require('gulp-imagemin'),
     rename      = require('gulp-rename'),
-    concat = require('gulp-concat'),
     clean   = require('gulp-clean'),
     gulpif   = require('gulp-if'),
     debug       = require('gulp-debug'),
     changed     = require('gulp-changed'),
-    // runSequence = require('run-sequence'), // for gulp3
-    runSequence = require('gulp4-run-sequence'), // for gulp4
-    gutil = require('gulp-util'),
-    watchPath = require('gulp-watch-path'),
-    combiner = require('stream-combiner2');
+    minimist = require("minimist"),
+    rev    = require('gulp-rev-append');
 var sourceMap = require('gulp-sourcemaps');
-const browserSync = require('browser-sync').create();
 var pump = require('pump');
+const config = require('../config').default;
 
-
-gulp.task('clean', function(cb) {
-  pump([
-      gulp.src('./dist',{allowEmpty: true}),
-      clean()
-  ], cb)
-})
 //处理js文件
 gulp.task('handleJs',function(cb){
   return pump([
-    gulp.src('./src/js/*.js'),
+    gulp.src(config.src+'/js/*.js'),
     sourceMap.init(),
     sourceMap.identityMap(),
     // concat('all.js'),
     debug({title: '编译:'}),
-    changed('./dist/js'),
+    changed(config.dest+'/js'),
     uglify(),
     sourceMap.write('../../maps/js',{addComment: false}),
-    gulp.dest('./dist/js')
+    gulp.dest(config.dest+'/js')
   ], cb)
-  // return gulp.src('./src/js/*.js')  
-  //   .pipe( sourceMap.init() )
-  //   .pipe(sourceMap.identityMap())
-  //   .pipe(concat('all.js'))  //合并后的文件名
-  //   .pipe(debug({title: '编译:'}))
-  //   .pipe(changed('dist/js'))
-  //   .pipe( uglify() )  
-  //   .pipe( sourceMap.write('../../maps/js',{addComment: false}))
-  //   .pipe( gulp.dest('./dist/js') ) 
 })
 
-// 压缩css文件
-// gulp.task('cssmin', function() {
-//   return gulp.src('src/css/*.css')
-//         .pipe(minifycss({
-//             keepSpecialComments: '*'
-//             //保留所有特殊前缀 当你用autoprefixer生成的浏览器前缀，如果不加这个参数，有可能将会删除你的部分前缀
-//         }))
-//         .pipe(gulp.dest('dist/css'))
-// });
 gulp.task('cssmin', function(cb) {
   pump([
-      gulp.src('src/css/*.css'),
+      gulp.src(config.src+'/css/*.css'),
       rename({suffix: '.min'}),
       postcss([ autoprefixer({
         // 兼容主流浏览器的最新两个版本
@@ -75,14 +46,14 @@ gulp.task('cssmin', function(cb) {
           keepSpecialComments: '*'
           //保留所有特殊前缀 当你用autoprefixer生成的浏览器前缀，如果不加这个参数，有可能将会删除你的部分前缀
       }),
-      gulp.dest('dist/css')
+      gulp.dest(config.dest+'/css')
   ], cb
   )
 });
 
 gulp.task('handleLess', function(cb) {
   pump([
-      gulp.src('src/css/*.less'),
+      gulp.src(config.src+'/css/*.less'),
       less(),
       postcss([ autoprefixer({
         // 兼容主流浏览器的最新两个版本
@@ -94,7 +65,7 @@ gulp.task('handleLess', function(cb) {
           keepSpecialComments: '*'
           //保留所有特殊前缀 当你用autoprefixer生成的浏览器前缀，如果不加这个参数，有可能将会删除你的部分前缀
       }),
-      gulp.dest('dist/css')
+      gulp.dest(config.dest+'/css')
   ], cb
   )
 });
@@ -111,55 +82,33 @@ gulp.task('handleHtmlmin', function (cb) {
     minifyCSS: true//压缩页面CSS
   };
   pump([
-      gulp.src('src/html/*.html'),
+      gulp.src(config.src+'/html/*.html'),
+      rev(),
       htmlmin(options),
-      gulp.dest('dist')
+      gulp.dest(config.dest+'/html')
   ], cb)
 });
 
 // 压缩图片
 gulp.task('testImagemin', function (cb) {
+  var knownOptions = {
+    string: 'env',
+    default: { env: process.env.NODE_ENV || 'production' }
+  };
+  
+  var options = minimist(process.argv.slice(2), knownOptions);
+  console.log('op..',options)
   pump([
-      gulp.src('src/images/*.{png,jpg,gif,ico}'),
-      gulpif(global.production, imgmin({
+      gulp.src(config.src+'/images/*.{png,jpg,gif,ico}'),
+      gulpif(options.env === 'production', imgmin({
         optimizationLevel: 5, //类型：Number  默认：3  取值范围：0-7（优化等级）
         progressive: true,    //类型：Boolean 默认：false 无损压缩jpg图片
         interlaced: true,     //类型：Boolean 默认：false 隔行扫描gif进行渲染
         multipass: true,       //类型：Boolean 默认：false 多次优化svg直到完全优化
         svgoPlugins: [{removeViewBox: false}],//不要移除svg的viewbox属性
       })),
-      gulp.dest('dist/img')
+      gulp.dest(config.dest+'/img')
   ], cb);
 });
 
-/**
- * 开启浏览器
- */
-gulp.task('browserSync', function() {
-    browserSync.init([
-            "src/**/*.*", 
-        ], {
-        server: {
-            baseDir: "./dist"
-        }
-    });
-});
-
-gulp.task('watch', gulp.series('browserSync'), function () {
-    gulp.watch(config.src + "/**/*.*", ['handleJs','cssmin','handleLess','handleHtmlmin','testImagemin']);
-});
-
-// gulp.task('default',
-//   gulp.series('clean',
-//     gulp.parallel('handleJs','cssmin','handleLess','handleHtmlmin','testImagemin')  
-//   )
-// )
-
-gulp.task('default', function(cb) {
-  runSequence(
-      'clean', // 第一步：清理目标目录
-      ['handleJs','cssmin','handleLess','handleHtmlmin','testImagemin'], // 第二步：打包 
-      'watch', // 第三步：监控
-      cb
-  );
-});
+gulp.task('default', gulp.parallel('handleJs','cssmin','handleLess','handleHtmlmin','testImagemin'));

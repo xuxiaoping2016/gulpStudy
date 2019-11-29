@@ -1,0 +1,14 @@
+#parent{
+    height: 100%;
+}
+
+.child{
+    width:100px;
+    height: 100px;
+    position: absolute;
+    left: 100px;
+    top: 30px;
+    border: 10px solid #fefefe;
+}
+
+.flex {display:flex}

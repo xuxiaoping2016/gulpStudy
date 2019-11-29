@@ -1,0 +1,1 @@
+{"version":3,"sources":["index2.js"],"names":["rename","console","log","exports","default"],"mappings":"AAAA,SAASA,SACLC,QAAQC,IAAI,mBAGhBC,QAAQC,QAAUJ","file":"../../src/js/index2.js","sourcesContent":["function rename(){\n    console.log('rename function')\n}\n\nexports.default = rename;"]}
